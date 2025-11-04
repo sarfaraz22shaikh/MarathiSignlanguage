@@ -15,7 +15,7 @@ import { Image } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { getImageSource } from '../../assets/imageMapping';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const AlphabetsModule = ({ navigation }) => {
   const [currentAlphabet, setCurrentAlphabet] = useState(0);
@@ -63,13 +63,14 @@ const AlphabetsModule = ({ navigation }) => {
     { letter: 'ष', pronunciation: 'sha', meaning: 'SH sound', signDescription: 'Hand in peace sign, different' },
     { letter: 'स', pronunciation: 'sa', meaning: 'S sound', signDescription: 'Closed fist' },
     { letter: 'ह', pronunciation: 'ha', meaning: 'H sound', signDescription: 'Open hand waving' },
+    { letter: 'ळ', pronunciation: 'la', meaning: 'L sound', signDescription: 'Thumb and index finger forming I' },
+    { letter: 'क्ष', pronunciation: 'ksha', meaning: 'KSH sound', signDescription: 'Thumb and index finger forming K' },
+    { letter: 'ज्ञ', pronunciation: 'jna', meaning: 'JN sound', signDescription: 'Thumb and index finger forming J' },
   ];
 
   const getCurrentAlphabet = () => {
     return marathiAlphabets[currentAlphabet];
   };
-
-
 
   // Get image source for current alphabet
   const getCurrentImageSource = () => {
@@ -85,8 +86,7 @@ const AlphabetsModule = ({ navigation }) => {
 
   // Handle Try Now button press - show alert
   const handleTryNow = () => {
-    Alert.alert('Try Now Is', 'This feature will be available soon.');
-    
+    Alert.alert('Try Now', 'This feature will be available soon.');
   };
 
   // Render alphabet grid
@@ -115,6 +115,7 @@ const AlphabetsModule = ({ navigation }) => {
   // Render image modal
   const renderImageModal = () => {
     const alphabet = getCurrentAlphabet();
+    const imageSource = getCurrentImageSource();
     
     return (
       <Modal
@@ -124,7 +125,7 @@ const AlphabetsModule = ({ navigation }) => {
         onRequestClose={() => setShowImage(false)}
       >
         <LinearGradient
-          colors={['#3498db', '#f5f5f5']}
+          colors={['#3498db', '#2980b9']}
           style={styles.modalContainer}
         >
           <StatusBar barStyle="light-content" />
@@ -139,31 +140,43 @@ const AlphabetsModule = ({ navigation }) => {
           </View>
 
           <View style={styles.imageContainer}>
-            <Text style={styles.imageLetter}>
-              {alphabet.letter}
-            </Text>
-            
-            {/* Sign Language Image */}
-            <View style={styles.imagePlaceholder}>
-              {getCurrentImageSource() ? (
-                <Image
-                  source={getCurrentImageSource()}
-                  style={styles.signLanguageImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <>
-                  <Text style={styles.imagePlaceholderText}>🖼️</Text>
-                  <Text style={styles.imagePlaceholderLabel}>
-                    Sign Language Image for "{alphabet.letter}"
-                  </Text>
-                </>
-              )}
-              <Text style={styles.imagePlaceholderSubtext}>
-                {alphabet.signDescription}
+            {/* Letter Display */}
+            <View style={styles.letterSection}>
+              <Text style={styles.imageLetter}>{alphabet.letter}</Text>
+              <Text style={styles.pronunciationText}>
+                Pronunciation: {alphabet.pronunciation}
               </Text>
             </View>
+            
+            {/* Sign Language Image Card */}
+            <View style={styles.imageCard}>
+              <View style={styles.imageWrapper}>
+                {imageSource ? (
+                  <Image
+                    source={imageSource}
+                    style={styles.signLanguageImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.placeholderContent}>
+                    <Text style={styles.imagePlaceholderText}>🖼️</Text>
+                    <Text style={styles.imagePlaceholderLabel}>
+                      Sign Language Image
+                    </Text>
+                  </View>
+                )}
+              </View>
+              
+              {/* Description Box */}
+              <View style={styles.descriptionBox}>
+                <Text style={styles.descriptionTitle}>Hand Sign:</Text>
+                <Text style={styles.descriptionText}>
+                  {alphabet.signDescription}
+                </Text>
+              </View>
+            </View>
 
+            {/* Try Now Button */}
             <TouchableOpacity
               style={styles.tryNowButton}
               onPress={handleTryNow}
@@ -268,84 +281,140 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
+    paddingTop: 20,
+    // paddingBottom: 10,
+    // backgroundColor: '#111417ff',
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    // backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  imageContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  imageLetter: {
-    fontSize: 80,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  imagePlaceholder: {
-    width: width * 0.8,
-    height: width * 0.6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  imagePlaceholderText: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  imagePlaceholderLabel: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  imagePlaceholderSubtext: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  signLanguageImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 15,
-  },
-  tryNowButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 25,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  letterSection: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  imageLetter: {
+    fontSize: 72,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+  },
+  pronunciationText: {
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  imageCard: {
+    width: width * 0.9,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  imageWrapper: {
+    width: '100%',
+    height: height * 0.4,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 15,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+  },
+  signLanguageImage: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    fontSize: 60,
+    marginBottom: 10,
+  },
+  imagePlaceholderLabel: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  descriptionBox: {
+    marginTop: 15,
+    padding: 15,
+    backgroundColor: '#f0f7ff',
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3498db',
+  },
+  descriptionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 6,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: '#34495e',
+    lineHeight: 22,
+  },
+  tryNowButton: {
+    backgroundColor: '#2ecc71',
+    paddingHorizontal: 50,
+    paddingVertical: 16,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+    marginTop: 10,
   },
   tryNowButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 
