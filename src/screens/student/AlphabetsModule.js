@@ -14,14 +14,29 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { getImageSource } from '../../assets/imageMapping';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+
 
 const { width, height } = Dimensions.get('window');
 
 const AlphabetsModule = ({ navigation }) => {
   const [currentAlphabet, setCurrentAlphabet] = useState(0);
   const [showImage, setShowImage] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);  // ✅ Camera permission
+  const [showCamera, setShowCamera] = useState(false);        // ✅ Camera toggle
+  const [cameraRef, setCameraRef] = useState(null);
 
-  // Marathi alphabets (अ to ह)
+  const [permission, requestPermission] = useCameraPermissions();
+
+  useEffect(() => {
+    if (!permission) {
+      requestPermission();
+    }
+  }, [permission]);
+ 
+
+
+  // Marathi alphabets (unchanged)
   const marathiAlphabets = [
     { letter: 'अ', pronunciation: 'a', meaning: 'First letter', signDescription: 'Open palm facing forward' },
     { letter: 'आ', pronunciation: 'aa', meaning: 'Long A', signDescription: 'Two fingers extended upward' },
@@ -68,121 +83,114 @@ const AlphabetsModule = ({ navigation }) => {
     { letter: 'ज्ञ', pronunciation: 'jna', meaning: 'JN sound', signDescription: 'Thumb and index finger forming J' },
   ];
 
-  const getCurrentAlphabet = () => {
-    return marathiAlphabets[currentAlphabet];
-  };
-
-  // Get image source for current alphabet
+  const getCurrentAlphabet = () => marathiAlphabets[currentAlphabet];
   const getCurrentImageSource = () => {
     const alphabet = getCurrentAlphabet();
     return getImageSource(alphabet.letter);
   };
 
-  // Handle alphabet card press
   const handleAlphabetPress = (index) => {
     setCurrentAlphabet(index);
     setShowImage(true);
+    setShowCamera(false);
   };
 
-  // Handle Try Now button press - show alert
+  // ✅ Updated Try Now handler
   const handleTryNow = () => {
-    Alert.alert('Try Now', 'This feature will be available soon.');
+    if (hasPermission === false) {
+      Alert.alert('Permission Denied', 'Please allow camera access in settings.');
+      return;
+    }
+    setShowCamera(true);
   };
 
-  // Render alphabet grid
-  const renderAlphabetGrid = () => {
-    return (
-      <FlatList
-        data={marathiAlphabets}
-        numColumns={4}
-        keyExtractor={(item, index) => `marathi-${index}`}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={styles.alphabetCard}
-            onPress={() => handleAlphabetPress(index)}
-          >
-            <Text style={styles.alphabetLetter}>
-              {item.letter}
-            </Text>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.gridContainer}
-        showsVerticalScrollIndicator={false}
-      />
-    );
+  // ✅ Close camera
+  const handleCloseCamera = () => {
+    setShowCamera(false);
   };
 
-  // Render image modal
+  // Alphabet Grid (unchanged)
+  const renderAlphabetGrid = () => (
+    <FlatList
+      data={marathiAlphabets}
+      numColumns={4}
+      keyExtractor={(item, index) => `marathi-${index}`}
+      renderItem={({ item, index }) => (
+        <TouchableOpacity style={styles.alphabetCard} onPress={() => handleAlphabetPress(index)}>
+          <Text style={styles.alphabetLetter}>{item.letter}</Text>
+        </TouchableOpacity>
+      )}
+      contentContainerStyle={styles.gridContainer}
+      showsVerticalScrollIndicator={false}
+    />
+  );
+
+  // ✅ Updated Modal with Camera integration
   const renderImageModal = () => {
     const alphabet = getCurrentAlphabet();
     const imageSource = getCurrentImageSource();
-    
+
     return (
-      <Modal
-        visible={showImage}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowImage(false)}
-      >
-        <LinearGradient
-          colors={['#3498db', '#2980b9']}
-          style={styles.modalContainer}
-        >
+      <Modal visible={showImage} animationType="slide" onRequestClose={() => setShowImage(false)}>
+        <LinearGradient colors={['#3498db', '#2980b9']} style={styles.modalContainer}>
           <StatusBar barStyle="light-content" />
-          
+
           <View style={styles.modalHeader}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowImage(false)}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowImage(false)}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.imageContainer}>
-            {/* Letter Display */}
             <View style={styles.letterSection}>
               <Text style={styles.imageLetter}>{alphabet.letter}</Text>
               <Text style={styles.pronunciationText}>
                 Pronunciation: {alphabet.pronunciation}
               </Text>
             </View>
-            
-            {/* Sign Language Image Card */}
+
+            {/* ✅ Sign Image or Camera */}
             <View style={styles.imageCard}>
               <View style={styles.imageWrapper}>
-                {imageSource ? (
-                  <Image
-                    source={imageSource}
-                    style={styles.signLanguageImage}
-                    resizeMode="contain"
-                  />
+                {!showCamera ? (
+                  imageSource ? (
+                    <Image source={imageSource} style={styles.signLanguageImage} resizeMode="contain" />
+                  ) : (
+                    <View style={styles.placeholderContent}>
+                      <Text style={styles.imagePlaceholderText}>🖼️</Text>
+                      <Text style={styles.imagePlaceholderLabel}>Sign Language Image</Text>
+                    </View>
+                  )
                 ) : (
-                  <View style={styles.placeholderContent}>
-                    <Text style={styles.imagePlaceholderText}>🖼️</Text>
-                    <Text style={styles.imagePlaceholderLabel}>
-                      Sign Language Image
-                    </Text>
-                  </View>
+                  <CameraView
+                    style={styles.signLanguageImage}
+                    facing="front"
+                    ref={setCameraRef}
+                  />
+
+
                 )}
               </View>
-              
-              {/* Description Box */}
+
               <View style={styles.descriptionBox}>
                 <Text style={styles.descriptionTitle}>Hand Sign:</Text>
-                <Text style={styles.descriptionText}>
-                  {alphabet.signDescription}
-                </Text>
+                <Text style={styles.descriptionText}>{alphabet.signDescription}</Text>
               </View>
             </View>
 
-            {/* Try Now Button */}
-            <TouchableOpacity
-              style={styles.tryNowButton}
-              onPress={handleTryNow}
-            >
-              <Text style={styles.tryNowButtonText}>Try Now</Text>
-            </TouchableOpacity>
+            {/* ✅ Conditional Buttons */}
+            {!showCamera ? (
+              <TouchableOpacity style={styles.tryNowButton} onPress={handleTryNow}>
+                <Text style={styles.tryNowButtonText}>Try Now</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.tryNowButton, { backgroundColor: '#e74c3c' }]}
+                onPress={handleCloseCamera}
+              >
+                <Text style={styles.tryNowButtonText}>Close Camera</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </LinearGradient>
       </Modal>
@@ -190,30 +198,16 @@ const AlphabetsModule = ({ navigation }) => {
   };
 
   return (
-    <LinearGradient
-      colors={['#3498db', '#f5f5f5']}
-      style={styles.container}
-    >
+    <LinearGradient colors={['#3498db', '#f5f5f5']} style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        
         <Text style={styles.headerTitle}>Alphabet Learning</Text>
-        
         <View style={styles.headerSpacer} />
       </View>
-
-      {/* Alphabet Grid */}
       {renderAlphabetGrid()}
-
-      {/* Image Modal */}
       {renderImageModal()}
     </LinearGradient>
   );
